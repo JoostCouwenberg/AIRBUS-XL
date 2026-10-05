@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Life's Road Rally — Board Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EDE6D6;
+    --bg-card:#F7F2E7;
+    --bg-cell:#ffffff;
+    --ink:#2B2320;
+    --ink-soft:#6b5f50;
+    --accent:#7A2E3A;
+    --accent-ink:#ffffff;
+    --gold:#D9A441;
+    --teal:#2F6F6B;
+    --sage:#7C9473;
+    --slate:#5C7A8A;
+    --plum:#6B4C6B;
+    --border:#d8cdb4;
+    --grass:#C9D6A8;
+    --lake:#5C93A5;
+    --frame:#3B4A3C;
+    --sky:#DCEAE3;
+    --shadow: 0 2px 0 rgba(43,35,32,0.12);
+    box-sizing:border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#1D1913; --bg-card:#2A241C; --bg-cell:#33291d; --ink:#EDE6D6; --ink-soft:#b9ae98;
+      --accent:#C15A6C; --accent-ink:#241009; --gold:#E3B961; --teal:#5FA39D; --sage:#93AF87;
+      --slate:#8CA6B5; --plum:#9C7B9C; --border:#463c2d; --grass:#3a4530; --lake:#2f4d57; --frame:#1c241d;
+      --sky:#26312b; --shadow: 0 2px 0 rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1D1913; --bg-card:#2A241C; --bg-cell:#33291d; --ink:#EDE6D6; --ink-soft:#b9ae98;
+    --accent:#C15A6C; --accent-ink:#241009; --gold:#E3B961; --teal:#5FA39D; --sage:#93AF87;
+    --slate:#8CA6B5; --plum:#9C7B9C; --border:#463c2d; --grass:#3a4530; --lake:#2f4d57; --frame:#1c241d;
+    --sky:#26312b; --shadow: 0 2px 0 rgba(0,0,0,0.4);
+  }
+  html{ scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *{ box-sizing:border-box; }
+  html, body{ height:100%; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:'Space Grotesk','Segoe UI',sans-serif; -webkit-font-smoothing:antialiased; }
+  h1,h2,h3,.display{ font-family:'Fraunces', Georgia, serif; }
+
+  #app{ max-width:1040px; margin:0 auto; padding:28px 16px 60px; }
+  .view{ display:none; }
+  .view.active{ display:block; }
+
+  .boardhead{ text-align:center; margin-bottom:14px; }
+  .boardhead h1{ font-size:clamp(2.2rem,6.4vw,3.2rem); font-weight:700; font-style:italic; margin:0 0 4px; letter-spacing:-0.01em; }
+  .boardhead p{ margin:0 auto; max-width:50ch; color:var(--ink-soft); font-size:0.98rem; line-height:1.5; }
+
+  .letters-tray{ display:flex; justify-content:center; gap:10px; margin:16px 0 10px; }
+  .letter-slot{
+    width:44px; height:44px; border:2px solid var(--border); border-radius:6px;
+    display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-weight:700;
+    font-size:1.3rem; background:var(--bg-card); color:var(--ink-soft);
+    transition: transform .35s ease, color .35s ease, border-color .35s ease;
+  }
+  .letter-slot.filled{ color:var(--accent); border-color:var(--accent); transform:scale(1.08) rotate(-2deg); }
+
+  .title-mosaic{
+    position:absolute; z-index:3; display:grid; gap:2px; padding:6px; background:var(--ink);
+    border-radius:6px; box-shadow: var(--shadow);
+  }
+  .title-mosaic .trow{ display:flex; gap:2px; }
+  .title-mosaic .tletter{
+    width:22px; height:22px; display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces',serif; font-weight:700; font-size:0.85rem; border-radius:3px; color:#fff;
+  }
+
+  .board-frame{ background:var(--frame); border-radius:16px; padding:8px; box-shadow: var(--shadow); position:relative; }
+  .board-frame::before{
+    content:""; position:absolute; inset:3px; border-radius:12px; pointer-events:none;
+    border:2px dashed rgba(255,255,255,0.18);
+  }
+  .board-wrap{
+    position:relative; background:var(--grass); border-radius:10px; overflow:hidden;
+    aspect-ratio: 1200 / 900; width:100%;
+  }
+  .sky-strip{ position:absolute; left:0; right:0; top:0; height:12%; background:linear-gradient(var(--sky), transparent); z-index:0; }
+  .blob{ position:absolute; border-radius:63% 37% 54% 46% / 55% 45% 55% 45%; z-index:0; opacity:0.9; }
+  .blob.forest{ background:var(--sage); }
+  .blob.water{ background:var(--lake); }
+  .plot{ position:absolute; background:#cbb98e; border:1.5px dashed #9c8a5c; border-radius:3px; z-index:0; opacity:0.6; }
+  .spinner{
+    position:absolute; z-index:1; border-radius:50%; border:5px solid var(--bg-card);
+    box-shadow: var(--shadow);
+    background: conic-gradient(var(--gold) 0 14%, var(--teal) 14% 28%, var(--accent) 28% 42%, var(--sage) 42% 56%, var(--slate) 56% 70%, var(--plum) 70% 84%, var(--gold) 84% 100%);
+  }
+  .spinner::after{ content:""; position:absolute; inset:38%; background:var(--bg-card); border-radius:50%; border:3px solid var(--ink); }
+  .deco-emoji{ position:absolute; z-index:4; opacity:1; pointer-events:none; }
+  .egg{ position:absolute; z-index:2; text-decoration:none; opacity:0.4; font-size:0.85rem; line-height:1; filter:grayscale(0.3); }
+  .egg:hover{ opacity:0.6; }
+  .egg.locked{ cursor:default; pointer-events:none; }
+  .decoy-rock{ position:absolute; z-index:1; opacity:0.4; font-size:0.85rem; line-height:1; filter:grayscale(0.3); pointer-events:none; }
+
+  .trail-svg{ position:absolute; z-index:4; pointer-events:none; opacity:0.75; }
+  .trail-svg path{ stroke:var(--ink-soft); stroke-width:2.5; fill:none; stroke-dasharray:6 7; }
+  .rainbow-svg{ position:absolute; z-index:0; pointer-events:none; opacity:0.7; }
+  .runway{ position:absolute; z-index:4; background:#8a8577; border-radius:6px; opacity:0.85; box-shadow:var(--shadow); }
+  .runway::after{
+    content:""; position:absolute; left:6%; right:6%; top:50%; height:2px; transform:translateY(-50%);
+    background-image: repeating-linear-gradient(to right, #fff 0 10px, transparent 10px 20px);
+  }
+  .flying{ position:absolute; z-index:5; pointer-events:none; filter: drop-shadow(0 2px 1px rgba(0,0,0,0.15)); }
+  .tower{ position:absolute; z-index:4; pointer-events:none; }
+  .tower .body{ fill:var(--bg-card); stroke:var(--ink); stroke-width:2.5; }
+  .tower .dome{ fill:var(--accent); stroke:var(--ink); stroke-width:2; }
+  .tower .mast{ stroke:var(--ink); stroke-width:2; }
+
+  .tile{
+    position:absolute; z-index:2; background:var(--bg-cell); border:1.3px solid var(--ink);
+    border-radius:4px; display:flex; align-items:center; justify-content:center; text-align:center;
+    padding:2px; cursor:default;
+  }
+  .tile .txt{ font-size:0.44rem; line-height:1.15; color:var(--ink); font-weight:500; }
+  .tile.payday{ background:var(--teal); }
+  .tile.payday .txt{ color:#fff; font-weight:700; font-size:0.62rem; font-family:'Fraunces',serif; }
+  .tile.puzzle{ background:var(--accent); cursor:pointer; }
+  .tile.puzzle .txt{ color:#fff; }
+  .tile.puzzle .txt .picon{ font-size:1.15rem; display:block; }
+  .tile.puzzle .txt .pcap{ font-size:0.5rem; font-weight:700; }
+  .tile.puzzle.solved{ background:var(--sage); }
+  .coin-badge{ position:absolute; z-index:4; width:22px; height:22px; border-radius:50%; background:var(--gold);
+    display:flex; align-items:center; justify-content:center; font-size:0.65rem; border:1.5px solid var(--bg-card);
+    box-shadow: var(--shadow); }
+
+  .flag{
+    position:absolute; z-index:3; transform:translate(-50%,-50%);
+    width:34px; height:34px; border-radius:50%; background:var(--bg-card); border:2.5px solid var(--ink);
+    display:flex; align-items:center; justify-content:center; font-size:1.05rem;
+  }
+  .flag.finish{ cursor:pointer; }
+  .flag.finish.disabled{ opacity:0.5; cursor:not-allowed; filter:grayscale(0.6); }
+
+  .board-hint{ text-align:center; color:var(--ink-soft); font-size:0.85rem; margin-top:14px; }
+  .reset-link{ display:block; text-align:center; margin-top:20px; color:var(--ink-soft); font-size:0.8rem; text-decoration:underline; background:none; border:none; cursor:pointer; font-family:inherit; }
+
+  .puzzle-top{ display:flex; align-items:center; gap:14px; margin-bottom:18px; flex-wrap:wrap; }
+  .back-btn{ border:2px solid var(--border); background:var(--bg-card); color:var(--ink); padding:8px 14px; border-radius:8px; font-family:inherit; font-weight:600; cursor:pointer; font-size:0.9rem; }
+  .back-btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .puzzle-top .station-tag{ color:var(--ink-soft); font-size:0.85rem; }
+  .puzzle-card{ background:var(--bg-card); border:2px solid var(--border); border-radius:14px; padding:24px; box-shadow:var(--shadow); }
+  .puzzle-card h2{ margin:0 0 6px; font-size:1.7rem; }
+  .life-stage{ font-style:italic; color:var(--teal); font-size:0.88rem; margin:0 0 14px; }
+  .puzzle-instructions{ color:var(--ink-soft); font-size:0.92rem; line-height:1.55; max-width:62ch; margin:0 0 20px; }
+  .puzzle-status{ margin-top:16px; font-weight:600; min-height:1.4em; color:var(--teal); }
+  .puzzle-status.error{ color:var(--accent); }
+  .solved-banner{ margin-top:16px; background:var(--teal); color:#fff; padding:14px 16px; border-radius:10px; font-weight:600; display:none; }
+  .solved-banner.show{ display:block; }
+
+  .qgrid{ display:grid; grid-template-columns:repeat(12,1fr); gap:2px; max-width:520px; margin:0 auto; aspect-ratio:1; border:3px solid var(--ink); border-radius:6px; overflow:hidden; }
+  .crown{ color:#1d1d1d; text-shadow:0 0 2px #fff; }
+  .qcell{ display:flex; align-items:center; justify-content:center; font-size:clamp(0.7rem,2.8vw,1.2rem); cursor:pointer; user-select:none; aspect-ratio:1; }
+
+  .tgrid{ display:grid; grid-template-columns:repeat(10,1fr); gap:2px; max-width:520px; margin:0 auto; aspect-ratio:1; }
+  .tcell{ display:flex; align-items:center; justify-content:center; font-size:clamp(0.55rem,2.3vw,0.95rem); background:var(--bg-cell); border:1.3px solid var(--border); border-radius:4px; cursor:pointer; user-select:none; aspect-ratio:1; }
+  .tcell.clue{ background:var(--border); cursor:default; }
+
+  .zgrid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; max-width:420px; margin:0 auto; aspect-ratio:1; }
+  .zcell{ position:relative; display:flex; align-items:center; justify-content:center; background:var(--bg-cell); border:2px solid var(--border); border-radius:6px; cursor:pointer; user-select:none; aspect-ratio:1; font-family:'Fraunces',serif; font-weight:700; font-size:clamp(0.8rem,3.2vw,1.15rem); color:var(--ink-soft); }
+  .zcell.visited{ background:var(--gold); color:var(--ink); border-color:var(--gold); }
+  .zcell .order{ position:absolute; top:2px; right:4px; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:0.5rem; color:var(--ink-soft); opacity:0.8; }
+  .zip-controls{ text-align:center; margin-top:14px; }
+  .ghost-btn{ border:2px solid var(--border); background:transparent; color:var(--ink-soft); padding:6px 14px; border-radius:8px; font-family:inherit; cursor:pointer; font-size:0.85rem; }
+
+  .patches-wrap{ display:flex; flex-direction:column; align-items:center; gap:22px; }
+  .patch-board{ display:grid; grid-template-columns:repeat(10,40px); grid-template-rows:repeat(4,40px); gap:3px; background:var(--ink); padding:3px; border-radius:8px; overflow-x:auto; }
+  .patch-cell{ background:var(--bg-cell); border-radius:3px; cursor:pointer; }
+  .patch-cell.filled{ cursor:default; }
+  .patch-tray{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+  .patch-piece{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .patch-mini{ display:grid; gap:2px; padding:6px; border-radius:8px; border:2px solid var(--border); background:var(--bg-card); cursor:pointer; }
+  .patch-mini.selected{ border-color:var(--accent); box-shadow:0 0 0 2px var(--accent) inset; }
+  .patch-mini .mcell{ width:12px; height:12px; border-radius:2px; background:transparent; }
+  .patch-mini .mcell.on{ background:var(--piece-color, var(--accent)); }
+  .patch-mini .mcell.anchor{ box-shadow: inset 0 0 0 2px #fff; }
+  .patch-piece button{ border:2px solid var(--border); background:transparent; color:var(--ink-soft); border-radius:6px; padding:3px 10px; font-family:inherit; font-size:0.75rem; cursor:pointer; }
+
+  .primary-btn{ background:var(--accent); color:#fff; border:none; padding:10px 18px; border-radius:8px; font-family:inherit; font-weight:600; cursor:pointer; font-size:0.95rem; }
+  .primary-btn:hover{ filter:brightness(1.06); }
+
+  .finish-card{ text-align:center; padding:50px 24px; }
+  .finish-card .word{ font-family:'Fraunces',serif; font-weight:700; font-style:italic; font-size:clamp(2.6rem,12vw,4.5rem); color:var(--accent); letter-spacing:0.06em; margin:6px 0 18px; }
+  .finish-card p{ max-width:44ch; margin:0 auto 22px; color:var(--ink-soft); line-height:1.6; }
+
+  @media (max-width:560px){
+    .patch-board{ grid-template-columns:repeat(10,32px); grid-template-rows:repeat(4,32px); }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- BOARD -->
+  <section id="view-board" class="view active">
+    <div class="boardhead">
+      <h1>Life's Road Rally</h1>
+      <p>Follow the winding path from Start to Finish. Four burgundy puzzle tiles are hidden along the way — solve each one to earn a letter for the final answer.</p>
+    </div>
+
+    <div class="letters-tray" id="letters-tray">
+      <div class="letter-slot" data-slot="1">?</div>
+      <div class="letter-slot" data-slot="2">?</div>
+      <div class="letter-slot" data-slot="3">?</div>
+      <div class="letter-slot" data-slot="4">?</div>
+    </div>
+
+    <div class="board-frame">
+      <div class="board-wrap" id="board-wrap">
+        <div class="sky-strip"></div>
+
+        <div class="blob forest" style="width:170px; height:130px; left:-40px; top:-30px;"></div>
+        <div class="blob forest" style="width:150px; height:120px; right:-40px; top:-20px;"></div>
+        <div class="blob water" style="width:190px; height:140px; right:-50px; bottom:-30px;"></div>
+        <div class="blob forest" style="width:160px; height:130px; left:-40px; bottom:-30px;"></div>
+        <div class="blob forest" style="width:90px; height:70px; left:46%; top:-4%;"></div>
+        <div class="blob water" style="width:100px; height:80px; left:-3%; top:38%;"></div>
+        <div class="blob forest" style="width:95px; height:75px; right:-3%; top:60%;"></div>
+        <div class="blob water" style="width:80px; height:65px; left:30%; bottom:-3%;"></div>
+
+        <div class="plot" style="width:90px; height:60px; left:38%; top:14%;"></div>
+        <div class="plot" style="width:80px; height:55px; left:56%; top:52%;"></div>
+        <div class="plot" style="width:70px; height:48px; left:8%; top:60%;"></div>
+
+        <span class="deco-emoji" style="left:2%; top:6%; font-size:1.6rem;">☁️</span>
+        <span class="deco-emoji" style="right:14%; top:3%; font-size:1.3rem;">☁️</span>
+        <span class="deco-emoji" style="right:4%; top:1%; font-size:1.8rem;">☀️</span>
+        <span class="deco-emoji" style="left:10%; top:22%; font-size:1.2rem;">🌲</span>
+        <span class="deco-emoji" style="left:88%; top:18%; font-size:1.2rem;">🌳</span>
+        <span class="deco-emoji" style="left:6%; top:46%; font-size:1.1rem;">🌿</span>
+        <span class="deco-emoji" style="left:92%; top:44%; font-size:1.2rem;">🌲</span>
+        <span class="deco-emoji" style="left:14%; top:74%; font-size:1.1rem;">🌸</span>
+        <span class="deco-emoji" style="left:80%; top:78%; font-size:1.1rem;">🦋</span>
+        <span class="deco-emoji" style="left:60%; top:6%; font-size:1.1rem;">🐦</span>
+        <span class="deco-emoji" style="left:6%; top:88%; font-size:1.3rem;">🧭</span>
+        <span class="deco-emoji" style="left:48%; top:96%; font-size:1.1rem;">🌾</span>
+
+        <span class="decoy-rock" style="left:20%; top:10%;">🪨</span>
+        <span class="decoy-rock" style="left:70%; top:26%;">🪨</span>
+        <span class="decoy-rock" style="left:34%; top:64%;">🪨</span>
+        <span class="decoy-rock" style="left:88%; top:8%;">🪨</span>
+
+        <div class="spinner" id="spinner" style="width:110px; height:110px; left:47%; top:88%;"></div>
+        <a class="egg locked" id="egg-pin" target="_blank" rel="noopener" aria-disabled="true" style="left:3%; top:93%;">🪨</a>
+
+        <svg class="tower" viewBox="0 0 60 90" width="46" height="70" style="left:5%; top:6%;">
+          <rect class="body" x="20" y="35" width="20" height="45"></rect>
+          <path class="body" d="M14,35 L46,35 L38,10 L22,10 Z"></path>
+          <circle class="dome" cx="30" cy="8" r="6"></circle>
+          <line class="mast" x1="30" y1="2" x2="30" y2="-8"></line>
+        </svg>
+
+        <div class="coin-badge" style="left:16%; top:16%;">💰</div>
+        <div class="coin-badge" style="right:4%; top:26%;">⏳</div>
+        <div class="coin-badge" style="left:3%; top:52%;">❤️</div>
+        <div class="coin-badge" style="left:38%; top:44%;">❓</div>
+        <div class="coin-badge" style="right:16%; top:62%;">⭐</div>
+        <div class="coin-badge" style="left:20%; top:88%;">💰</div>
+        <div class="coin-badge" style="right:3%; top:82%;">⏳</div>
+        <div class="coin-badge" style="left:60%; top:6%;">⭐</div>
+
+        <svg class="rainbow-svg" viewBox="0 0 220 110" width="180" height="90" style="right:-3%; top:-3%;">
+          <path d="M10,105 A100,100 0 0 1 210,105" stroke="var(--gold)" stroke-width="7" fill="none"></path>
+          <path d="M22,105 A88,88 0 0 1 198,105" stroke="var(--teal)" stroke-width="7" fill="none"></path>
+          <path d="M34,105 A76,76 0 0 1 186,105" stroke="var(--accent)" stroke-width="7" fill="none"></path>
+          <path d="M46,105 A64,64 0 0 1 174,105" stroke="var(--sage)" stroke-width="7" fill="none"></path>
+        </svg>
+
+        <div class="runway" style="width:170px; height:26px; left:60%; top:22%; transform:rotate(8deg);"></div>
+
+        <svg class="trail-svg" viewBox="0 0 160 100" width="140" height="90" style="left:12%; top:28%;">
+          <path d="M5,90 Q60,60 150,10"></path>
+        </svg>
+        <span class="flying" style="left:22%; top:20%; font-size:1.8rem; transform:rotate(-28deg);">✈️</span>
+
+        <svg class="trail-svg" viewBox="0 0 160 100" width="120" height="80" style="right:6%; top:50%;">
+          <path d="M150,90 Q90,55 10,15"></path>
+        </svg>
+        <span class="flying" style="right:10%; top:42%; font-size:1.6rem; transform:rotate(150deg) scaleX(-1);">✈️</span>
+
+        <svg class="trail-svg" viewBox="0 0 160 100" width="110" height="70" style="left:36%; top:58%;">
+          <path d="M10,10 Q70,50 150,90"></path>
+        </svg>
+        <span class="flying" style="left:44%; top:64%; font-size:1.7rem; transform:rotate(38deg);">🛩️</span>
+
+        <span class="flying" style="left:6%; top:44%; font-size:1.7rem; transform:rotate(-8deg);">🚁</span>
+        <span class="flying" style="right:20%; top:8%; font-size:1.5rem;">🛫</span>
+        <span class="flying" style="left:28%; top:82%; font-size:1.5rem;">🛬</span>
+
+        <span class="flying" style="left:56%; top:70%; font-size:1.7rem; transform:rotate(-45deg);">🚀</span>
+        <span class="deco-emoji" style="left:52%; top:76%; font-size:0.9rem;">⭐</span>
+        <span class="deco-emoji" style="left:62%; top:64%; font-size:0.8rem;">⭐</span>
+
+        <span class="flying" style="left:80%; top:10%; font-size:1.5rem; transform:rotate(35deg);">🚀</span>
+        <span class="deco-emoji" style="left:84%; top:18%; font-size:0.8rem;">✨</span>
+
+        <span class="deco-emoji" style="left:20%; top:56%; font-size:1.1rem;">🐝</span>
+        <span class="deco-emoji" style="left:64%; top:34%; font-size:1rem;">🍃</span>
+        <span class="deco-emoji" style="left:34%; top:4%; font-size:1.3rem;">☁️</span>
+        <span class="deco-emoji" style="left:70%; top:44%; font-size:1.2rem;">☁️</span>
+        <span class="deco-emoji" style="left:8%; top:66%; font-size:0.9rem;">⭐</span>
+        <span class="deco-emoji" style="left:90%; top:70%; font-size:0.9rem;">⭐</span>
+        <span class="deco-emoji" style="left:96%; top:32%; font-size:1rem;">🎈</span>
+
+        <div id="tiles-layer"></div>
+      </div>
+    </div>
+    <p class="board-hint">Tiles follow the road as it curves. Tap a burgundy tile to open its puzzle.</p>
+    <button class="reset-link" id="reset-btn">Reset for the next team</button>
+  </section>
+
+  <!-- PUZZLE 1: QUEENS -->
+  <section id="view-puzzle1" class="view puzzle-view">
+    <div class="puzzle-top">
+      <button class="back-btn" data-back>← Back to the board</button>
+      <span class="station-tag">Puzzle tile 1</span>
+    </div>
+    <div class="puzzle-card">
+      <h2>Crown Puzzle</h2>
+      <p class="life-stage">Years of school lead here — one last test before your first real job.</p>
+      <p class="puzzle-instructions">Place a crown in some cells so that every row, every column and every coloured region contains exactly one crown, and no two crowns touch — not even diagonally. Click a cell to place or remove a crown. This edition runs 12 rows by 12 columns with 12 regions.</p>
+      <div class="qgrid" id="qgrid"></div>
+      <div class="puzzle-status" id="q-status"></div>
+      <div class="solved-banner" id="q-banner"></div>
+    </div>
+  </section>
+
+  <!-- PUZZLE 2: TANGO -->
+  <section id="view-puzzle2" class="view puzzle-view">
+    <div class="puzzle-top">
+      <button class="back-btn" data-back>← Back to the board</button>
+      <span class="station-tag">Puzzle tile 2</span>
+    </div>
+    <div class="puzzle-card">
+      <h2>Sun &amp; Moon</h2>
+      <p class="life-stage">Two lives, one path — say "I do," and figure out the balance together.</p>
+      <p class="puzzle-instructions">Fill every empty cell with a sun ☀️ or a moon 🌙. Each row and column must end up with an equal number of suns and moons, and no three matching symbols may sit in a row or column.</p>
+      <div class="tgrid" id="tgrid"></div>
+      <div class="puzzle-status" id="t-status"></div>
+      <div class="solved-banner" id="t-banner"></div>
+    </div>
+  </section>
+
+  <!-- PUZZLE 3: ZIP -->
+  <section id="view-puzzle3" class="view puzzle-view">
+    <div class="puzzle-top">
+      <button class="back-btn" data-back>← Back to the board</button>
+      <span class="station-tag">Puzzle tile 3</span>
+    </div>
+    <div class="puzzle-card">
+      <h2>Connect the Numbers</h2>
+      <p class="life-stage">The big promotion is one connection away — climb the ladder, one link at a time.</p>
+      <p class="puzzle-instructions">Draw a single path from 1 to 6 that visits every cell of this 7×7 board exactly once. Click cell 1 to start, then keep clicking a cell next to your last step to extend the trail. The numbers must come up in the correct order. The route this time has no clean shape to latch onto — it isn't a spiral, and it doesn't just sweep side to side or up and down — so you'll want to feel your way through it.</p>
+      <div class="zgrid" id="zgrid"></div>
+      <div class="zip-controls"><button class="ghost-btn" id="zip-undo">Undo last step</button></div>
+      <div class="puzzle-status" id="z-status"></div>
+      <div class="solved-banner" id="z-banner"></div>
+    </div>
+  </section>
+
+  <!-- PUZZLE 4: PATCHES -->
+  <section id="view-puzzle4" class="view puzzle-view">
+    <div class="puzzle-top">
+      <button class="back-btn" data-back>← Back to the board</button>
+      <span class="station-tag">Puzzle tile 4</span>
+    </div>
+    <div class="puzzle-card">
+      <h2>Patchwork</h2>
+      <p class="life-stage">Retirement at last — time to sit back and see how all the pieces fit together.</p>
+      <p class="puzzle-instructions">Cover this 4×10 board completely with the ten coloured pieces — nothing may overlap and no gap may remain. Click a piece in the tray to select it, rotate it if needed, then click the board cell where its highlighted corner should land. Click a placed piece to pick it back up. There are no simple squares in this set — it's a trickier mix of straight, L, J, T, S and Z shapes that interlock in less obvious ways.</p>
+      <div class="patches-wrap">
+        <div class="patch-board" id="patch-board"></div>
+        <div class="patch-tray" id="patch-tray"></div>
+      </div>
+      <div class="puzzle-status" id="pa-status"></div>
+      <div class="solved-banner" id="pa-banner"></div>
+    </div>
+  </section>
+
+  <!-- FINISH -->
+  <section id="view-finish" class="view">
+    <div class="puzzle-top">
+      <button class="back-btn" data-back>← Back to the board</button>
+    </div>
+    <div class="puzzle-card finish-card">
+      <h2>You made it!</h2>
+      <div class="word" id="finish-word">ROCK</div>
+      <p>Show this screen to the rally organisers to get your next clue. Well played!</p>
+      <button class="primary-btn" id="finish-reset">New team, reset the game</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "life_road_rally_progress_v5";
+  var LETTERS = {1:"R", 2:"O", 3:"C", 4:"K"};
+  var ROCK_URL = "https://www.google.com/maps/place/Parkeerplaats+Kandelaarweg/@51.9557271,4.3967782,3a,90y,100.52h,85.05t/data=!3m7!1e1!3m5!1sO7yYGkwNLHGDV2U83xL8qw!2e0!6shttps:%2F%2Fstreetviewpixels-pa.googleapis.com%2Fv1%2Fthumbnail%3Fcb_client%3Dmaps_sv.tactile%26w%3D900%26h%3D600%26pitch%3D4.947878300814153%26panoid%3DO7yYGkwNLHGDV2U83xL8qw%26yaw%3D100.52013712667967!7i16384!8i8192!4m28!1m21!4m20!1m11!1m2!1s0x47c5b5c099249077:0xb3ef540787525154!2sDelft,+2611+DX+Delft!2m2!1d4.3570178!2d52.0068441!3m4!1m2!1d4.3940078!2d51.9613295!3s0x47c5cabd5e8d6bff:0xe3cd70a18c165cf9!1m6!1m2!1s0x47c5cabda9b43921:0x5d570b9b0b38be85!2sKandelaarbrug,+3047+EV+Rotterdam!2m2!1d4.3961516!2d51.9586103!3e0!3m5!1s0x47c5cabc769eb2e1:0xc28358d8c1bf412d!8m2!3d51.9557367!4d4.3967425!16s%2Fg%2F11gf8dv7x_?entry=ttu&g_ep=EgoyMDI2MDkzMC4wIKXMDSoASAFQAw%3D%3D";
+  var state = {1:false, 2:false, 3:false, 4:false};
+
+  function loadState(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        var parsed = JSON.parse(raw);
+        [1,2,3,4].forEach(function(k){ if(parsed[k]) state[k] = true; });
+      }
+    }catch(e){}
+  }
+  function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+
+  function showView(id){
+    document.querySelectorAll(".view").forEach(function(v){ v.classList.remove("active"); });
+    document.getElementById(id).classList.add("active");
+    window.scrollTo(0,0);
+  }
+
+  function refreshBoard(){
+    [1,2,3,4].forEach(function(k){
+      var t = document.querySelector('.tile.puzzle[data-puzzle="'+k+'"]');
+      var slot = document.querySelector('.letter-slot[data-slot="'+k+'"]');
+      if(t){ t.classList.toggle("solved", !!state[k]); }
+      if(slot){ slot.textContent = state[k] ? LETTERS[k] : "?"; slot.classList.toggle("filled", !!state[k]); }
+    });
+    var allDone = state[1] && state[2] && state[3] && state[4];
+    var finishBtn = document.getElementById("flag-finish");
+    if(finishBtn){ finishBtn.classList.toggle("disabled", !allDone); }
+    var egg = document.getElementById("egg-pin");
+    if(egg){
+      if(allDone){ egg.setAttribute("href", ROCK_URL); egg.classList.remove("locked"); egg.removeAttribute("aria-disabled"); }
+      else { egg.removeAttribute("href"); egg.classList.add("locked"); egg.setAttribute("aria-disabled","true"); }
+    }
+  }
+
+  function markSolved(n){
+    if(state[n]) return;
+    state[n] = true;
+    saveState();
+    refreshBoard();
+  }
+
+  function resetAll(){
+    state = {1:false,2:false,3:false,4:false};
+    saveState();
+    refreshBoard();
+    initQueens(); initTango(); initZip(); initPatches();
+    showView("view-board");
+  }
+
+  document.querySelectorAll("[data-back]").forEach(function(btn){
+    btn.addEventListener("click", function(){ showView("view-board"); });
+  });
+  document.getElementById("reset-btn").addEventListener("click", resetAll);
+  document.getElementById("finish-reset").addEventListener("click", resetAll);
+
+  /* ================= BOARD: curvy tile road ================= */
+  var BOARD_W = 1200, BOARD_H = 900;
+  var ROAD_D = "M100,90 C250,40 350,140 500,90 C650,40 750,140 900,90 C1000,60 1050,110 1100,90 " +
+    "C1160,90 1160,150 1160,190 C1160,220 1160,260 1100,230 C1000,280 900,180 750,230 C600,280 500,180 350,230 C220,270 150,200 100,230 " +
+    "C60,260 60,330 100,370 C250,320 350,420 500,370 C650,320 750,420 900,370 C1000,340 1050,390 1100,370 " +
+    "C1160,370 1160,470 1160,510 C1000,560 900,460 750,510 C600,560 500,460 350,510 C220,550 150,480 100,510 " +
+    "C60,540 60,610 100,650 C250,600 350,700 500,650 C650,600 750,700 900,650 C1000,620 1050,670 1100,650 " +
+    "C1160,650 1160,750 1160,790 C1000,840 900,740 750,790 C600,840 500,740 350,790 C220,830 150,760 100,790";
+
+  var FLAVOR = [
+    "Born on a Tuesday, right on schedule.",
+    "First steps — move ahead one space.",
+    "A birthday! Everyone chips in for cake.",
+    "You learn to ride a bike, no training wheels.",
+    "Report card: straight A's this term.",
+    "You lose your first tooth.",
+    "Summer break: three months of daylight.",
+    "You win the sack race at the fair.",
+    "First job: paper route before sunrise.",
+    "Pass your driving test on the first try.",
+    "You move to a brand new town.",
+    "Bump into an old friend on the street.",
+    "You plant a tree in the yard.",
+    "A trip to a country you've never seen.",
+    "New recipe, and it works on the first go.",
+    "Bought a raffle ticket — no luck this time.",
+    "A whole day of doing nothing. Bliss.",
+    "You find a coin on the pavement.",
+    "New job, nervous first day.",
+    "You adopt a pet.",
+    "An old photograph turns up again.",
+    "You cook dinner for a big group of friends.",
+    "Storm's coming — take shelter under the bridge.",
+    "A stranger gives you an unexpected compliment.",
+    "Not every stone is just decoration. One remembers exactly where you stand.",
+    "You take up a hobby you never expected to enjoy.",
+    "A letter arrives, years later than intended.",
+    "You finally fix that thing you've been ignoring.",
+    "Someone teaches you a trick you'll never forget.",
+    "The weather turns, and so does your mood."
+  ];
+
+  var PUZZLES = [
+    {n:1, icon:"👑", caption:"PUZZLE 1"},
+    {n:2, icon:"🌗", caption:"PUZZLE 2"},
+    {n:3, icon:"🔗", caption:"PUZZLE 3"},
+    {n:4, icon:"🧩", caption:"PUZZLE 4"}
+  ];
+
+  function placeEl(el, point, angleDeg, wUnits, hUnits){
+    el.style.left = (point.x / BOARD_W * 100) + "%";
+    el.style.top = (point.y / BOARD_H * 100) + "%";
+    el.style.width = (wUnits / BOARD_W * 100) + "%";
+    el.style.height = (hUnits / BOARD_H * 100) + "%";
+    el.style.transform = "translate(-50%,-50%) rotate(" + angleDeg + "deg)";
+  }
+
+  function buildBoard(){
+    var wrap = document.getElementById("board-wrap");
+    var layer = document.getElementById("tiles-layer");
+    layer.innerHTML = "";
+
+    var svgHolder = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svgHolder.setAttribute("width", "0"); svgHolder.setAttribute("height", "0");
+    svgHolder.style.position = "absolute";
+    var pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    pathEl.setAttribute("d", ROAD_D);
+    svgHolder.appendChild(pathEl);
+    wrap.appendChild(svgHolder);
+
+    var totalLen = pathEl.getTotalLength();
+    var cellLen = 66;
+    var roadWidth = 82;
+    var startOffset = 26;
+    var endMargin = 26;
+    var count = Math.floor((totalLen - startOffset - endMargin) / cellLen);
+
+    var puzzleIdx = [
+      Math.round(count * 0.13),
+      Math.round(count * 0.39),
+      Math.round(count * 0.62),
+      Math.round(count * 0.87)
+    ];
+
+    var flavorPtr = 0;
+
+    for(var i=0; i<count; i++){
+      var d = startOffset + i * cellLen;
+      var p1 = pathEl.getPointAtLength(d);
+      var p2 = pathEl.getPointAtLength(Math.min(d + 1, totalLen));
+      var angle = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI;
+
+      var puzzlePos = -1;
+      for(var pi=0; pi<puzzleIdx.length; pi++){ if(puzzleIdx[pi] === i) puzzlePos = pi; }
+
+      if(puzzlePos >= 0){
+        var pz = PUZZLES[puzzlePos];
+        var tile = document.createElement("div");
+        tile.className = "tile puzzle";
+        tile.dataset.puzzle = pz.n;
+        placeEl(tile, p1, angle, cellLen * 1.6, roadWidth * 1.5);
+        var inner = document.createElement("div");
+        inner.className = "txt";
+        inner.style.transform = "rotate(" + (-angle) + "deg)";
+        inner.innerHTML = '<span class="picon">'+pz.icon+'</span><span class="pcap">'+pz.caption+'</span>';
+        tile.appendChild(inner);
+        tile.addEventListener("click", function(){ showView("view-puzzle" + this.dataset.puzzle); });
+        layer.appendChild(tile);
+      } else if(i % 9 === 4){
+        var pd = document.createElement("div");
+        pd.className = "tile payday";
+        placeEl(pd, p1, angle, cellLen * 1.3, roadWidth * 1.2);
+        var pin = document.createElement("div");
+        pin.className = "txt"; pin.style.transform = "rotate(" + (-angle) + "deg)";
+        pin.textContent = "PAY DAY";
+        pd.appendChild(pin);
+        layer.appendChild(pd);
+      } else {
+        var tc = document.createElement("div");
+        tc.className = "tile";
+        placeEl(tc, p1, angle, cellLen, roadWidth);
+        var tin = document.createElement("div");
+        tin.className = "txt"; tin.style.transform = "rotate(" + (-angle) + "deg)";
+        tin.textContent = FLAVOR[flavorPtr % FLAVOR.length];
+        flavorPtr++;
+        tc.appendChild(tin);
+        layer.appendChild(tc);
+      }
+    }
+
+    var startPoint = pathEl.getPointAtLength(0);
+    var endPoint = pathEl.getPointAtLength(totalLen);
+    var startFlag = document.createElement("div");
+    startFlag.className = "flag";
+    startFlag.textContent = "🚦";
+    startFlag.style.left = (startPoint.x / BOARD_W * 100) + "%";
+    startFlag.style.top = (startPoint.y / BOARD_H * 100) + "%";
+    layer.appendChild(startFlag);
+
+    var finishFlag = document.createElement("div");
+    finishFlag.className = "flag finish disabled";
+    finishFlag.id = "flag-finish";
+    finishFlag.textContent = "🏁";
+    finishFlag.style.left = (endPoint.x / BOARD_W * 100) + "%";
+    finishFlag.style.top = (endPoint.y / BOARD_H * 100) + "%";
+    finishFlag.addEventListener("click", function(){
+      if(this.classList.contains("disabled")) return;
+      showView("view-finish");
+    });
+    layer.appendChild(finishFlag);
+
+    wrap.removeChild(svgHolder);
+  }
+
+  function buildTitleMosaic(){
+    var wrap = document.getElementById("board-wrap");
+    var mosaic = document.createElement("div");
+    mosaic.className = "title-mosaic";
+    mosaic.style.left = "40%"; mosaic.style.top = "34%";
+    var words = ["ROAD", "OF", "LIFE"];
+    var colors = ["var(--gold)","var(--teal)","var(--accent)","var(--sage)","var(--slate)","var(--plum)"];
+    var ci = 0;
+    words.forEach(function(word){
+      var row = document.createElement("div");
+      row.className = "trow";
+      word.split("").forEach(function(ch){
+        var t = document.createElement("div");
+        t.className = "tletter";
+        t.style.background = colors[ci % colors.length]; ci++;
+        t.textContent = ch;
+        row.appendChild(t);
+      });
+      mosaic.appendChild(row);
+    });
+    wrap.appendChild(mosaic);
+  }
+
+  /* ================= PUZZLE 1: QUEENS (12x12) ================= */
+  var qColors = [
+    [0,0,0,0,1,1,1,1,1,1,2,2],
+    [0,0,0,0,0,3,3,4,4,2,2,2],
+    [0,0,0,0,0,3,3,3,4,2,5,5],
+    [6,6,0,0,7,7,3,3,4,8,5,5],
+    [6,6,6,0,9,7,7,7,8,8,5,5],
+    [6,6,6,9,9,7,7,7,8,8,5,5],
+    [6,6,9,9,9,7,7,7,8,8,10,10],
+    [6,6,9,9,9,9,7,7,10,10,10,10],
+    [6,6,9,9,9,9,9,7,10,10,10,10],
+    [11,11,9,9,9,9,9,10,10,10,10,10],
+    [11,11,11,9,9,9,9,10,10,10,10,10],
+    [11,11,11,9,9,9,9,10,10,10,10,10]
+  ];
+  var qPalette = ["#B9B09E","#FF7B5F","#E7F58A","#FFCB91","#97BDFF","#BBA3E2","#D3E2A5","#9BCBD0","#69EBE1","#E0E0E0","#B5E2A0","#DFA3C3"];
+  var qState = [];
+  var Q_N = 12;
+
+  function initQueens(){
+    qState = [];
+    for(var r=0;r<Q_N;r++){ qState.push(new Array(Q_N).fill(0)); }
+    var grid = document.getElementById("qgrid");
+    grid.innerHTML = "";
+    document.getElementById("q-status").textContent = "";
+    document.getElementById("q-status").className = "puzzle-status";
+    document.getElementById("q-banner").classList.remove("show");
+    for(var r2=0;r2<Q_N;r2++){
+      for(var c2=0;c2<Q_N;c2++){
+        var cell = document.createElement("div");
+        cell.className = "qcell";
+        cell.style.background = qPalette[qColors[r2][c2]];
+        cell.dataset.r = r2; cell.dataset.c = c2;
+        cell.addEventListener("click", function(){
+          var rr = +this.dataset.r, cc = +this.dataset.c;
+          qState[rr][cc] = qState[rr][cc] ? 0 : 1;
+          this.innerHTML = qState[rr][cc] ? '<span class="crown">♛</span>' : "";
+          checkQueens();
+        });
+        grid.appendChild(cell);
+      }
+    }
+  }
+
+  function checkQueens(){
+    var statusEl = document.getElementById("q-status");
+    var rowCount = new Array(Q_N).fill(0), colCount = new Array(Q_N).fill(0), colorCount = new Array(Q_N).fill(0);
+    var positions = [];
+    for(var r=0;r<Q_N;r++) for(var c=0;c<Q_N;c++){
+      if(qState[r][c]){ rowCount[r]++; colCount[c]++; colorCount[qColors[r][c]]++; positions.push([r,c]); }
+    }
+    if(positions.length < Q_N){ statusEl.textContent = positions.length + " of " + Q_N + " crowns placed."; statusEl.className="puzzle-status"; return; }
+    var rowsOk = rowCount.every(function(n){return n===1;});
+    var colsOk = colCount.every(function(n){return n===1;});
+    var colorsOk = colorCount.every(function(n){return n===1;});
+    var adjOk = true;
+    for(var i=0;i<positions.length && adjOk;i++){
+      for(var j=i+1;j<positions.length;j++){
+        if(Math.abs(positions[i][0]-positions[j][0])<=1 && Math.abs(positions[i][1]-positions[j][1])<=1){ adjOk=false; break; }
+      }
+    }
+    if(rowsOk && colsOk && colorsOk && adjOk){
+      statusEl.textContent = "";
+      var b = document.getElementById("q-banner");
+      b.textContent = "Solved! You earned the letter " + LETTERS[1] + ". Head back to the board.";
+      b.classList.add("show");
+      markSolved(1);
+    } else {
+      statusEl.textContent = "Not quite — check rows, columns, colours, and whether any crowns touch.";
+      statusEl.className = "puzzle-status error";
+    }
+  }
+
+  /* ================= PUZZLE 2: TANGO (10x10 binary puzzle) ================= */
+  var TANGO_N = 10;
+  /* Solution from the binary puzzle: 0 = sun, 1 = moon */
+  var TANGO_SOL = ["0011010110", "1010010101", "1100101010", "0101001101", "0011010011", "1100110010", "0110101100", "1001001101", "0110110010", "1001101001"];
+  var TANGO_CLUES = ["0,1", "0,7", "0,8", "1,0", "1,7", "2,0", "2,5", "3,2", "3,6", "4,8", "5,0", "5,1", "5,3", "5,5", "5,7", "6,9", "7,1", "7,2", "7,8", "8,1", "8,5"];
+  var tState = [];
+  var ICON = {"S":"☀️","M":"🌙","":""};
+
+  function tangoFull(r,c){ return TANGO_SOL[r].charAt(c) === "0" ? "S" : "M"; }
+  function isClue(r,c){ return TANGO_CLUES.indexOf(r+","+c) !== -1; }
+
+  function initTango(){
+    tState = [];
+    for(var r=0;r<TANGO_N;r++){ var row=[]; for(var c=0;c<TANGO_N;c++){ row.push(isClue(r,c) ? tangoFull(r,c) : ""); } tState.push(row); }
+    var grid = document.getElementById("tgrid");
+    grid.innerHTML = "";
+    document.getElementById("t-status").textContent = "";
+    document.getElementById("t-status").className = "puzzle-status";
+    document.getElementById("t-banner").classList.remove("show");
+    for(var r2=0;r2<TANGO_N;r2++){
+      for(var c2=0;c2<TANGO_N;c2++){
+        var cell = document.createElement("div");
+        cell.className = "tcell" + (isClue(r2,c2) ? " clue" : "");
+        cell.dataset.r = r2; cell.dataset.c = c2;
+        cell.textContent = ICON[tState[r2][c2]];
+        if(!isClue(r2,c2)){
+          cell.addEventListener("click", function(){
+            var rr = +this.dataset.r, cc = +this.dataset.c;
+            var order = {"":"S","S":"M","M":""};
+            tState[rr][cc] = order[tState[rr][cc]];
+            this.textContent = ICON[tState[rr][cc]];
+            checkTango();
+          });
+        }
+        grid.appendChild(cell);
+      }
+    }
+  }
+
+  function noTripleRuns(arr){
+    for(var i=0;i<arr.length-2;i++){ if(arr[i] && arr[i]===arr[i+1] && arr[i+1]===arr[i+2]) return false; }
+    return true;
+  }
+
+  function checkTango(){
+    var statusEl = document.getElementById("t-status");
+    var half = TANGO_N / 2;
+    var filled = tState.every(function(row){ return row.every(function(v){ return v!==""; }); });
+    if(!filled){ statusEl.textContent = "Fill in every cell first."; statusEl.className="puzzle-status"; return; }
+    var rowsOk = tState.every(function(row){
+      var s = row.filter(function(v){return v==="S";}).length;
+      var m = row.filter(function(v){return v==="M";}).length;
+      return s===half && m===half && noTripleRuns(row);
+    });
+    var colsOk = true;
+    for(var c=0;c<TANGO_N;c++){
+      var col = tState.map(function(row){ return row[c]; });
+      var s = col.filter(function(v){return v==="S";}).length;
+      var m = col.filter(function(v){return v==="M";}).length;
+      if(!(s===half && m===half && noTripleRuns(col))){ colsOk=false; break; }
+    }
+    if(rowsOk && colsOk){
+      statusEl.textContent = "";
+      var b = document.getElementById("t-banner");
+      b.textContent = "Solved! You earned the letter " + LETTERS[2] + ". Head back to the board.";
+      b.classList.add("show");
+      markSolved(2);
+    } else {
+      statusEl.textContent = "Not yet — check that every row/column has an equal number of suns and moons, with no three in a row.";
+      statusEl.className = "puzzle-status error";
+    }
+  }
+
+  /* ================= PUZZLE 3: ZIP (7x7, 8 numbers) ================= */
+  var Z_N = 7;
+  var zNumbers = {"3,3":1, "2,1":2, "2,3":3, "2,5":4, "5,4":5, "4,0":6};
+  var zPath = [];
+
+  function keyOf(r,c){ return r+","+c; }
+
+  function initZip(){
+    zPath = [];
+    var grid = document.getElementById("zgrid");
+    grid.innerHTML = "";
+    document.getElementById("z-status").textContent = "";
+    document.getElementById("z-status").className = "puzzle-status";
+    document.getElementById("z-banner").classList.remove("show");
+    for(var r=0;r<Z_N;r++){
+      for(var c=0;c<Z_N;c++){
+        var cell = document.createElement("div");
+        cell.className = "zcell";
+        cell.dataset.r = r; cell.dataset.c = c;
+        var num = zNumbers[keyOf(r,c)];
+        if(num){ cell.textContent = num; }
+        cell.addEventListener("click", function(){ zipClick(+this.dataset.r, +this.dataset.c); });
+        grid.appendChild(cell);
+      }
+    }
+  }
+
+  function renderZip(){
+    document.querySelectorAll(".zcell").forEach(function(cell){
+      var r = +cell.dataset.r, c = +cell.dataset.c;
+      var idx = zPath.findIndex(function(p){ return p[0]===r && p[1]===c; });
+      var n = zNumbers[keyOf(r,c)];
+      if(idx>=0){
+        cell.classList.add("visited");
+        cell.innerHTML = (n ? n : "") + '<span class="order">'+(idx+1)+'</span>';
+      } else {
+        cell.classList.remove("visited");
+        cell.innerHTML = n ? n : "";
+      }
+    });
+  }
+
+  function zipClick(r,c){
+    var statusEl = document.getElementById("z-status");
+    var already = zPath.some(function(p){ return p[0]===r && p[1]===c; });
+    if(already) return;
+
+    if(zPath.length === 0){
+      if(zNumbers[keyOf(r,c)] !== 1){
+        statusEl.textContent = "Start at cell 1."; statusEl.className = "puzzle-status error"; return;
+      }
+      zPath.push([r,c]);
+    } else {
+      var last = zPath[zPath.length-1];
+      var adjacent = (Math.abs(last[0]-r)+Math.abs(last[1]-c)) === 1;
+      if(!adjacent){ statusEl.textContent = "Pick a cell next to your last step."; statusEl.className = "puzzle-status error"; return; }
+      var num = zNumbers[keyOf(r,c)];
+      if(num){
+        var nextExpected = zPath.filter(function(p){ return zNumbers[keyOf(p[0],p[1])]; }).length + 1;
+        if(num !== nextExpected){ statusEl.textContent = "That number isn't due yet."; statusEl.className = "puzzle-status error"; return; }
+      }
+      zPath.push([r,c]);
+    }
+    statusEl.textContent = ""; statusEl.className = "puzzle-status";
+    renderZip();
+    checkZip();
+  }
+
+  document.getElementById("zip-undo").addEventListener("click", function(){
+    zPath.pop(); renderZip(); document.getElementById("z-status").textContent = "";
+  });
+
+  function checkZip(){
+    if(zPath.length === Z_N*Z_N){
+      var numbersHit = zPath.filter(function(p){ return zNumbers[keyOf(p[0],p[1])]; }).length;
+      if(numbersHit === 6){
+        var b = document.getElementById("z-banner");
+        b.textContent = "Solved! You earned the letter " + LETTERS[3] + ". Head back to the board.";
+        b.classList.add("show");
+        markSolved(3);
+      }
+    }
+  }
+
+  /* ================= PUZZLE 4: PATCHES (4x8, eight rotated L-pieces) ================= */
+  var PATCH_ROWS = 4, PATCH_COLS = 10;
+  var patchColors = ["#B5482A","#2F6F6B","#D9A441","#6B4C6B","#7C9473","#5C7A8A","#8C5E3C","#3E6259","#A65A2E","#4A5A6B"];
+  var patchOwner = [];
+  var patches = [];
+  var selectedPatch = null;
+
+  function rotateShape(cells){
+    var maxR = Math.max.apply(null, cells.map(function(c){return c[0];}));
+    var rotated = cells.map(function(c){ return [c[1], maxR - c[0]]; });
+    var minR = Math.min.apply(null, rotated.map(function(c){return c[0];}));
+    var minC = Math.min.apply(null, rotated.map(function(c){return c[1];}));
+    return rotated.map(function(c){ return [c[0]-minR, c[1]-minC]; });
+  }
+
+  var PATCH_SHAPES = [
+    [[0,0],[0,1],[0,2],[0,3]],           // I
+    [[0,0],[0,1],[0,2],[0,3]],           // I
+    [[2,1],[1,1],[0,1],[0,0]],           // L variant
+    [[0,0],[1,0],[2,0],[2,1]],           // L variant
+    [[0,0],[0,1],[0,2],[1,2]],           // J variant
+    [[0,0],[0,1],[0,2],[1,1]],           // T
+    [[0,1],[0,2],[1,0],[1,1]],           // S
+    [[0,0],[0,1],[1,1],[1,2]],           // Z
+    [[1,2],[1,1],[1,0],[0,0]],           // J variant
+    [[1,2],[1,1],[1,0],[0,1]]            // T variant
+  ];
+
+  function initPatches(){
+    patches = patchColors.map(function(color, i){ return { shape: PATCH_SHAPES[i].map(function(c){return c.slice();}), placed:false, color: color }; });
+    patchOwner = [];
+    for(var r=0;r<PATCH_ROWS;r++){ patchOwner.push(new Array(PATCH_COLS).fill(null)); }
+    selectedPatch = null;
+    document.getElementById("pa-status").textContent = "";
+    document.getElementById("pa-status").className = "puzzle-status";
+    document.getElementById("pa-banner").classList.remove("show");
+    renderPatchBoard();
+    renderPatchTray();
+  }
+
+  function renderPatchBoard(){
+    var board = document.getElementById("patch-board");
+    board.innerHTML = "";
+    for(var r=0;r<PATCH_ROWS;r++){
+      for(var c=0;c<PATCH_COLS;c++){
+        var cell = document.createElement("div");
+        cell.className = "patch-cell" + (patchOwner[r][c]!==null ? " filled" : "");
+        if(patchOwner[r][c]!==null){ cell.style.background = patches[patchOwner[r][c]].color; }
+        cell.dataset.r = r; cell.dataset.c = c;
+        cell.addEventListener("click", function(){ patchCellClick(+this.dataset.r, +this.dataset.c); });
+        board.appendChild(cell);
+      }
+    }
+  }
+
+  function renderPatchTray(){
+    var tray = document.getElementById("patch-tray");
+    tray.innerHTML = "";
+    patches.forEach(function(p, idx){
+      if(p.placed) return;
+      var wrap = document.createElement("div");
+      wrap.className = "patch-piece";
+      var maxR = Math.max.apply(null, p.shape.map(function(c){return c[0];}));
+      var maxC = Math.max.apply(null, p.shape.map(function(c){return c[1];}));
+      var mini = document.createElement("div");
+      mini.className = "patch-mini" + (selectedPatch===idx ? " selected" : "");
+      mini.style.gridTemplateColumns = "repeat(" + (maxC+1) + ", 12px)";
+      mini.style.gridTemplateRows = "repeat(" + (maxR+1) + ", 12px)";
+      mini.style.setProperty("--piece-color", p.color);
+      for(var r=0;r<=maxR;r++){
+        for(var c=0;c<=maxC;c++){
+          var on = p.shape.some(function(cell){ return cell[0]===r && cell[1]===c; });
+          var isAnchor = (p.shape[0][0]===r && p.shape[0][1]===c);
+          var mc = document.createElement("div");
+          mc.className = "mcell" + (on ? " on" : "") + (isAnchor ? " anchor" : "");
+          mini.appendChild(mc);
+        }
+      }
+      mini.addEventListener("click", function(){ selectedPatch = (selectedPatch===idx ? null : idx); renderPatchTray(); });
+
+      var rotBtn = document.createElement("button");
+      rotBtn.textContent = "Rotate";
+      rotBtn.addEventListener("click", function(){ p.shape = rotateShape(p.shape); renderPatchTray(); });
+
+      wrap.appendChild(mini);
+      wrap.appendChild(rotBtn);
+      tray.appendChild(wrap);
+    });
+  }
+
+  function patchCellClick(r,c){
+    var statusEl = document.getElementById("pa-status");
+    if(patchOwner[r][c] !== null){
+      var idx = patchOwner[r][c];
+      for(var rr=0; rr<PATCH_ROWS; rr++){ for(var cc=0; cc<PATCH_COLS; cc++){ if(patchOwner[rr][cc]===idx) patchOwner[rr][cc]=null; } }
+      patches[idx].placed = false;
+      selectedPatch = null;
+      statusEl.textContent = "";
+      renderPatchBoard(); renderPatchTray();
+      return;
+    }
+    if(selectedPatch === null){ statusEl.textContent = "Pick a piece from the tray first."; statusEl.className = "puzzle-status error"; return; }
+    var piece = patches[selectedPatch];
+    var base0 = piece.shape[0];
+    var cells = piece.shape.map(function(cell){ return [r + (cell[0]-base0[0]), c + (cell[1]-base0[1])]; });
+    var fits = cells.every(function(cell){
+      return cell[0]>=0 && cell[0]<PATCH_ROWS && cell[1]>=0 && cell[1]<PATCH_COLS && patchOwner[cell[0]][cell[1]]===null;
+    });
+    if(!fits){ statusEl.textContent = "That doesn't fit there — off the board or overlapping."; statusEl.className = "puzzle-status error"; return; }
+    cells.forEach(function(cell){ patchOwner[cell[0]][cell[1]] = selectedPatch; });
+    piece.placed = true;
+    selectedPatch = null;
+    statusEl.textContent = ""; statusEl.className = "puzzle-status";
+    renderPatchBoard(); renderPatchTray();
+    checkPatches();
+  }
+
+  function checkPatches(){
+    var allPlaced = patches.every(function(p){ return p.placed; });
+    if(allPlaced){
+      var b = document.getElementById("pa-banner");
+      b.textContent = "Solved! You earned the letter " + LETTERS[4] + ". Head back to the board.";
+      b.classList.add("show");
+      markSolved(4);
+    }
+  }
+
+  /* ================= INIT ================= */
+  loadState();
+  buildBoard();
+  buildTitleMosaic();
+  refreshBoard();
+  initQueens();
+  initTango();
+  initZip();
+  initPatches();
+
+})();
+</script>
+</body>
+</html>
